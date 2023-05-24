@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>reveal.js</title>
+
+	<link rel="stylesheet" href="dist/reset.css">
+	<link rel="stylesheet" href="https://www.nerdfonts.com/assets/css/webfont.css">
+	<link rel="stylesheet" href="dist/reveal.css">
+	<link rel="stylesheet" href="dist/theme/black.css">
+
+	<!-- Theme used for syntax highlighted code -->
+	<link rel="stylesheet" href="plugin/highlight/monokai.css">
+	<style>
+	.highlight-red {
+		color: pink;
+		font-family: monospace;
+	}
+	
+	</style>
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section>
+				<h1><img src="assets/nix.svg" alt="nix" style="  vertical-align: middle;height: 1em;">Overview of Nix</h1>
+				<p><small>By Yogansh</small></p>
+			</section>
+
+			<section>
+				<h2><i class="nf nf-linux-nixos"></i> What is Nix?</h2>
+				<p>Nix is a package manager just like apt, pacman, homebrew ... </p>
+				<code>$ sudo apt install cowsay</code><br/>
+				<code>$ nix profile install nixpkgs#cowsay</code>
+				<aside class="notes">
+					The imperative way<br/>
+					if nix is installed in "multi-user mode"(recommend)
+					nix daemon is running in the background
+				</aside>
+			</section>
+
+			<section>
+				<h2><i class="nf nf-linux-nixos"></i> Advantages of Nix</h2>
+				<ul>
+					<li><b>Reproducible Enviorments</b> Work the same everytime even on diffrent machines</li>
+					<li><b>Declarative</b> trivial to share development and build environments</li>
+					<li><b>Configuration</b> Use a single language to manage machine and user configuration</li>
+					<li> <b>Rollbacks</b> Break something? Easily rollback machine configuration. Experiment without fear</li>
+				</ul>
+			</section>
+
+			<section>
+				<h2><i class="nf nf-linux-nixos"></i> Nix Language</h2>
+				<ul>
+					<li class="fragment fade-left">Pure</li>
+					<li class="fragment fade-left">Lazily evaluated</li>
+					<li class="fragment fade-left">Functional</li>
+					<li class="fragment fade-left">Domain specific</li>
+				</ul>
+				  <aside class="notes">
+					<ul>
+						<li>Pure: no side effects (for instance no variable assignment)</li>
+						<li>Lazy: only evaluated when needed</li>
+						<li>Functional:“normal” values that can be passed around and</li>
+						<li>manipulated in interesting ways</li>
+						<li>DS: Not general purpose</li>
+					</ul>
+				  </aside>
+			</section>
+			<section>
+				<section>
+				<h2><i class="nf nf-linux-nixos"></i> Nix Derivations</h2>
+				<p>A derivation is a <b>recipe</b> for building packages</p>
+				<ul>
+					<li>Take some <b>inputs</b></li>
+					<li>Run a <b>build</b> script</li>
+					<li>Get a package <b>output</b></li>
+				</ul>
+				</section>
+				<section>
+					<h4>Example</h4>
+					<pre><code data-trim data-line-numbers="|1|1,7|3,5,10|11">
+					{ stdenvNoCC, lib, fetchFromGitHub }:
+
+					stdenvNoCC.mkDerivation rec {
+					  pname = "pfetch";
+					  version = "0.6.0";
+
+					  src = fetchFromGitHub {
+						owner = "dylanaraps";
+						repo = "pfetch";
+						rev = version;
+						sha256 = "06z0k1naw3k052p2z7241lx92rp5m07zlr0alx8pdm6mkc3c4v8f";
+					  };
+
+					  dontBuild = true;
+
+					  installPhase = ''
+						install -Dm755 -t $out/bin pfetch
+					  '';
+
+					  meta = with lib; {
+						description = "A pretty system information tool written in POSIX sh";
+						homepage = "https://github.com/dylanaraps/pfetch";
+						license = licenses.mit;
+						platforms = platforms.all;
+						maintainers = with maintainers; [ equirosa ];
+					  };
+					}
+					</code></pre>
+
+				</section>
+				<section>
+					<img src="assets/nixd.png" alt=""  style="width: 100%;">
+					<p>
+						both instantiation and realization can be done in one step
+						using <code>nix-build</code>
+					</p>
+				</section>
+			</section>
+			<section>
+				<section>
+					<h2><i class="nf nf-linux-nixos"></i> Nix Shells</h2>
+				</section>
+				<section>
+					<h2><i class="nf nf-linux-nixos"></i> What is a Nix Shell?</h2>
+					<ul>
+						<li>Originally designed to debug nix</li>
+						<li>Can be used as a development enviorment</li>
+					</ul>
+				</section>
+				<section>
+					<h2><i class="nf nf-linux-nixos"></i> Simple Shell</h2>
+					<pre><code data-trim>
+					$ nix-shell -p pfetch
+					...
+					[nix-shell:~]$ which pfetch
+					/nix/store/gv8sfh1d8dmsj06bszbjvf5v2349y0vv-pfetch-0.6.0/bin/pfetch
+					</code></pre>
+				</section>
+				<section>
+					<h3>A cool tool!!</h3>
+					<p>If you want this to be more automated you could use tools like <span data-state="highlight-red">direnv/nix-direnv</span>
+					to automatically enter a shell when <code>cd</code>ing into a directory
+					</p>
+					
+				</section>
+			</section>
+			<section>
+				<section>
+				<h2><i class="nf nf-linux-nixos"></i> Nix Store</h2>
+				<p>Now we have a way to write derivations to build packages, but where are the packages stored?</p>
+				<div class="fragment fade-in">
+				<p>A special place called <code>/nix/store</code></p>
+				<pre><code class="data-trim">
+[nix-shell:~]$ which pfetch
+/nix/store/gv8sfh1d8dmsj06bszbjvf5v2349y0vv-pfetch-0.6.0/bin/pfetch
+				</code></pre>
+				</div>
+				
+				</section>
+				<section>
+					<h2><i class="nf nf-linux-nixos"></i> Dependency tracking</h2>
+					<p>The Nix store keeps track of what packages each package depends on</p>
+					<pre><code class="data-trim">
+[nix-shell:~]$ nix-store --query --tree $(which pfetch)
+/nix/store/gv8sfh1d8dmsj06bszbjvf5v2349y0vv-pfetch-0.6.0
+└───/nix/store/rhvbjmcfnkg8i2dxpzr114cp1ws7f667-bash-5.2-p15
+    ├───/nix/store/yaz7pyf0ah88g2v505l38n0f3wg2vzdj-glibc-2.37-8
+    │   ├───/nix/store/0fvh2p4irz0lw0cpy2ll1rf2hbhbym3g-xgcc-12.2.0-libgcc
+    │   ├───/nix/store/xqcrq3aw2fnrj7cp3id90wzy8x46qhw3-libidn2-2.3.4
+    │   │   ├───/nix/store/f437nzzrmjmf5k7q93mawr93vfrsqdb0-libunistring-1.1
+    │   │   │   └───/nix/store/f437nzzrmjmf5k7q93mawr93vfrsqdb0-libunistring-1.1 [...]
+    │   │   └───/nix/store/xqcrq3aw2fnrj7cp3id90wzy8x46qhw3-libidn2-2.3.4 [...]
+    │   └───/nix/store/yaz7pyf0ah88g2v505l38n0f3wg2vzdj-glibc-2.37-8 [...]
+    └───/nix/store/rhvbjmcfnkg8i2dxpzr114cp1ws7f667-bash-5.2-p15 [...]
+					</code></pre>
+				</section>
+				<section>
+					<h2><i class="nf nf-linux-nixos"></i> Garbage Collection</h2>
+					<p>Nix can detect which packages are unused and uninstall them without breaking your system</p>
+					<pre><code class="data-trim">$ nix-collect-garbage</code></pre>
+				</section>
+				
+			</section>
+				<section>
+					<section>
+						<h2><i class="nf nf-linux-nixos"></i> nixpkgs</h2>
+						<p>nixpkgs is a collection of derivation for building over 80,000 diffrent packages</p>
+					</section>
+				<section>
+					<img data-src="assets/repo.svg" style="width: 100%;">
+					<div style="position: absolute; width: auto; top: 0; left: 50%; transform: translateX(-50%); box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.6); color: #fff; padding: 20px;font-weight: bold; font-size: 20px;">
+						Repology's freshness/size map
+				</section>
+				<section data-background-image="assets/gitpkgs.png" data-background-size="contain">
+						
+					<div
+						style="position: absolute; width: 40%; right: 0; box-shadow: 0 1px 4px rgba(0,0,0,0.5), 0 5px 25px rgba(0,0,0,0.2); background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px; font-size: 20px; text-align: left;">
+						<h2>Why is that?</h2>
+						<p>Nix packages is nothing more than a github repository</p>
+					</div>
+				</section>
+			</section>
+			<section>
+				<section>
+				<h2><i class="nf nf-linux-nixos"></i> NixOs</h2>
+				<p>What if we used Nix to build an OS.. just like another package?</p>
+				<ul>
+					<li>configure the entire system with Nix</li>
+					<li><b>Reproducible Systems</b> Recreate the identical machine configuration</li>
+					<li><b>Rollbacks</b> Break something? Easily rollbacks <code>sudo nixos-rebuild switch --rollback</code></li>
+				</ul>
+				<aside class="notes">
+					might sound stupid but
+					OS = take source code -> apply build steps -> get binary
+					nix sees the operating system as nothing more than a package
+				</aside>
+				</section>
+
+				<section>
+					<p>Declarative way to define anything ...</p>
+				<pre><code>
+users.users.yogansh = {
+	isNormalUser = true;
+	extraGroups = ["systemd-journal" "wheel"];
+	uid = 1000;
+	shell=pkgs.zsh;
+}
+				</code></pre>
+				<aside class="notes">
+					Instead of nix to install and manage packages
+					use nix to configre your whole system<br>
+					- share the configuration between machines
+				</aside>
+				</section>
+			</section>
+				
+			<section>
+				<h2><i class="nf nf-linux-nixos"></i> home-manager</h2>
+				<ul>
+					<li><b>Like dotfiles</b> All managed with a single language, Nix</li>
+					<li>Install packages for your user</li>
+				</ul>
+			</section>
+			<section>
+				<h2><i class="nf nf-linux-nixos"></i> Resources</h2>
+				<ul>
+					<li><a href="https://zero-to-nix.com">https://zero-to-nix.com/</a></li>
+					<li><a href="https://nixos.org/manual/nix/stable/">https://nixos.org/manual/nix/stable/</a></li>
+					<li><a href="https://nixos.org/guides/nix-pills/">https://nixos.org/guides/nix-pills/</a></li>
+					<li><a href="https://zero-to-nix.com/">https://zero-to-nix.com/</a></li>
+					<li><a href="https://nixcloud.io/tour/">https://nixcloud.io/tour/</a></li>
+					<li><a href="https://nixos.wiki/">https://nixos.wiki/</a></li>
+					<li><a href="https://nixos.org/nixos/manual/">https://nixos.org/nixos/manual/</a></li>
+					<li><a href="https://fasterthanli.me/series/building-a-rust-service-with-nix/">https://fasterthanli.me/series/building-a-rust-service-with-nix/</a></li>
+				</ul>
+			</section>
+
+		</div>
+	</div>
+
+	<script src="dist/reveal.js"></script>
+	<script src="plugin/notes/notes.js"></script>
+	<script src="plugin/markdown/markdown.js"></script>
+	<script src="plugin/highlight/highlight.js"></script>
+	<script>
+		// More info about initialization & config:
+		// - https://revealjs.com/initialization/
+		// - https://revealjs.com/config/
+		Reveal.initialize({
+			hash: true,
+
+			// Learn about plugins: https://revealjs.com/plugins/
+			plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+		});
+	</script>
+</body>
+
+</html>
