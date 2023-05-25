@@ -1,7 +1,7 @@
 # NixOS Presentation using Reveal.js
 
 ## Viewing the Presentation
-![Click Here](https://present.yogansh.live) 
+[**Click Here**](https://present.yogansh.live) 
 
 or follow these steps:
 
