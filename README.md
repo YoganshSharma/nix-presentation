@@ -1,6 +1,9 @@
 # NixOS Presentation using Reveal.js
 
-# Viewing the Presentation
+## Viewing the Presentation
+![Click Here](https://present.yogansh.live) 
+
+or follow these steps:
 
 1. To view the presentation, follow these steps:
     Clone this repository to your local machine:
